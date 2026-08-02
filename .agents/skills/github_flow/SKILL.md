@@ -28,7 +28,7 @@ description: 이 스킬은 Git/GitHub를 사용할 때 브랜치를 생성하고
 
 ## 2. 작업 지침
 1. **상태 확인**: 항상 `git status`를 확인하여 현재 브랜치와 변경된 파일을 파악하세요.
-2. **브랜치 생성**: 새로운 작업을 시작할 때는 `git checkout -b feature/기능명` 형식으로 브랜치를 생성하세요.
+2. **브랜치 생성**: 새로운 작업을 시작할 때는 `git checkout -b feature/<feature-name>` 형식으로 브랜치를 생성하세요.
 3. **커밋 메시지 작성**: 위에 정의된 커밋 메시지 컨벤션을 따르세요.
    - 예: `git commit -m "feat: 데이터 전처리 함수 추가"`
 4. **Push 전 주의사항**: `backend/dataset/` 폴더나 대용량 파일(.csv, .pkl 등)이 스테이징되지 않았는지 반드시 확인하세요. `.gitignore`가 올바르게 작동하는지 체크합니다.
