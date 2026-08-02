@@ -6,7 +6,7 @@
 > 사용자가 "깃에 올려달라", "커밋해라", "버전 관리를 해달라" 등의 Git 관련 작업을 요청할 경우, 에이전트는 독단적으로 판단하지 말고 **반드시 `github_flow` 스킬(.agents/skills/github_flow/SKILL.md)을 먼저 확인하고** 해당 브랜치 생성 전략과 커밋 메시지 컨벤션(Karma)에 맞춰 작업을 진행해야 합니다.
 
 ## 1. 코드 및 프로젝트 구조 컨벤션
-* **언어 및 프레임워크**: Python 3.10+, Pandas, Scikit-learn, LightGBM, XGBoost, Optuna, Streamlit
+* **언어 및 프레임워크**: Python 3.10+, Pandas, Scikit-learn, LightGBM, XGBoost, CatBoost, Optuna, FastAPI
 * **디렉토리 구조**:
   * `backend/`: FastAPI 및 머신러닝 파이프라인
     * `backend/dataset/`: 원본 및 전처리된 데이터 (Git 제외)
@@ -26,5 +26,5 @@
 * 모델 평가는 대회 지표인 **Macro F1 Score**를 최우선으로 합니다.
 
 ## 3. UI/UX (웹 대시보드) 원칙
-* Streamlit을 활용하여 대시보드를 구축하되, 미려하고 현대적인 디자인을 적용합니다.
+* 대시보드 구축 시 미려하고 현대적인 디자인을 적용합니다.
 * 사용자가 직관적으로 불량 원인(SHAP 등)을 파악할 수 있도록 시각화 위주의 컴포넌트를 구성합니다.
