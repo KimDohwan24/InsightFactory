@@ -1,0 +1,8 @@
+backend/dataset/*
+!backend/dataset/.gitkeep
+backend/models/*
+!backend/models/.gitkeep
+backend/notebooks/.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.env
