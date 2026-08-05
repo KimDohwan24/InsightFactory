@@ -71,7 +71,8 @@ export default function WorkOrders() {
       setFormData(order);
     } else {
       setFormData({
-        id: `WO-${Date.now().toString().slice(-6)}`, 
+        // TODO: When API integration is implemented, replace this client-generated ID with the server-issued ID.
+        id: `WO-${crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).substring(2, 10)}`, 
         product: 'A_31', line: 'T010305', targetQuantity: 1000, 
         priority: 'Medium', startTime: '', endTime: ''
       });
@@ -93,6 +94,14 @@ export default function WorkOrders() {
 
   const handleSave = (e) => {
     e.preventDefault();
+    
+    if (formData.startTime && formData.endTime) {
+      if (new Date(formData.endTime) <= new Date(formData.startTime)) {
+        alert('종료 시간은 시작 시간 이후여야 합니다.');
+        return;
+      }
+    }
+
     if(modalMode === 'Create') {
       const newOrder = {
         ...formData,

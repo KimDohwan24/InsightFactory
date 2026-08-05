@@ -180,6 +180,7 @@ export default function Statistics() {
                 style={{ width: 'auto', padding: '4px 8px', fontSize: '13px', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-ink)' }} 
                 value={selectedModel} 
                 onChange={e => setSelectedModel(e.target.value)}
+                aria-label="AI 분석 모델 선택"
               >
                 <option value="A_31">A_31 Model</option>
                 <option value="T_31">T_31 Model</option>

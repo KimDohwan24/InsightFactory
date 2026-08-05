@@ -93,11 +93,18 @@ export default function Equipment() {
           </div>
           <div className="list-items">
             {filteredList.length > 0 ? filteredList.map(eq => (
-              <div 
+              <button 
+                type="button"
                 key={eq.id} 
                 className={`list-item ${selectedEq?.id === eq.id ? 'active' : ''}`}
                 onClick={() => setSelectedEq(eq)}
+                aria-pressed={selectedEq?.id === eq.id}
                 style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  borderTop: 'none',
+                  borderRight: 'none',
+                  outline: 'none',
                   padding: '16px',
                   borderBottom: '1px solid var(--color-hairline)',
                   cursor: 'pointer',
@@ -115,7 +122,7 @@ export default function Equipment() {
                 <span className="badge" style={{ backgroundColor: getStatusColor(eq.status), color: 'var(--color-on-primary)' }}>
                   {eq.status}
                 </span>
-              </div>
+              </button>
             )) : (
               <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-muted)' }}>
                 등록된 설비가 없습니다.

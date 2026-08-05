@@ -17,9 +17,9 @@ function Dashboard() {
     ? ((data.currentProduction / data.productionGoal) * 100).toFixed(1) 
     : '0.0';
 
-  const defectRate = data.currentProduction 
+  const defectRate = data.currentProduction != null && data.defectCount != null
     ? ((data.defectCount / data.currentProduction) * 100).toFixed(2)
-    : '0.00';
+    : '-';
 
   return (
     <main className="dashboard-content">

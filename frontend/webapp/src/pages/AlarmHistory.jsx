@@ -30,7 +30,8 @@ export default function AlarmHistory() {
   const [alarms, setAlarms] = useState(INITIAL_ALARMS);
   
   // Today date formatted as YYYY-MM-DD for default filter
-  const todayStr = '2026-08-04';
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   
   const [filters, setFilters] = useState({
     startDate: todayStr,

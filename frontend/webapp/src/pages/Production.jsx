@@ -85,7 +85,14 @@ function Production() {
             </div>
             <div className="stat-box">
               <span className="stat-label">상태</span>
-              <span className="badge badge-success" style={{ visibility: MOCK_PROD_DATA.lotInfo.status ? 'visible' : 'hidden' }}>
+              <span 
+                className={`badge ${
+                  MOCK_PROD_DATA.lotInfo.status === 'Error' ? 'badge-error' :
+                  MOCK_PROD_DATA.lotInfo.status === 'Idle' || MOCK_PROD_DATA.lotInfo.status === 'Warning' ? 'badge-warning' :
+                  'badge-success'
+                }`}
+                style={{ visibility: MOCK_PROD_DATA.lotInfo.status ? 'visible' : 'hidden' }}
+              >
                 {MOCK_PROD_DATA.lotInfo.status}
               </span>
             </div>

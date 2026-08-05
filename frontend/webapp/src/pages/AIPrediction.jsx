@@ -74,7 +74,7 @@ export default function AIPrediction() {
         </div>
         <div className="card-dark" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <span style={{ fontSize: '14px', color: 'var(--color-muted)', marginBottom: '8px' }}>F1 Score (성능 지표)</span>
-          <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--color-primary)' }}>{currentModel.f1Score ? currentModel.f1Score.toFixed(3) : '-'}</span>
+          <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--color-primary)' }}>{currentModel.f1Score != null ? currentModel.f1Score.toFixed(3) : '-'}</span>
         </div>
       </div>
 
@@ -88,11 +88,16 @@ export default function AIPrediction() {
           </div>
           <div className="list-items">
             {filteredPredictions.length > 0 ? filteredPredictions.map(pred => (
-              <div 
+              <button 
                 key={pred.id} 
                 className={`list-item ${selectedPred?.id === pred.id ? 'active' : ''}`}
                 onClick={() => setSelectedPred(pred)}
                 style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  borderTop: 'none',
+                  borderRight: 'none',
+                  outline: 'none',
                   padding: '16px',
                   borderBottom: '1px solid var(--color-hairline)',
                   cursor: 'pointer',
@@ -108,7 +113,7 @@ export default function AIPrediction() {
                   <div style={{ fontSize: '12px', color: 'var(--color-muted)', marginTop: '4px' }}>{pred.time}</div>
                 </div>
                 {getYClassBadge(pred.yClass)}
-              </div>
+              </button>
             )) : (
               <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-muted)' }}>
                 수집된 예측 데이터가 없습니다.
