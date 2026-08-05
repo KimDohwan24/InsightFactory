@@ -33,11 +33,8 @@ def train_T_O_31_ensemble_with_fs():
     zero_var_cols = [col for col in numeric_cols if X[col].std() == 0]
     X.drop(columns=zero_var_cols, inplace=True)
     
-    from sklearn.preprocessing import LabelEncoder
-    object_cols = X.select_dtypes(include=['object']).columns
-    for col in object_cols:
-        le = LabelEncoder()
-        X[col] = le.fit_transform(X[col].astype(str))
+    from src.preprocess import encode_categorical
+    X, encoder, object_cols = encode_categorical(X)
     
     print(f"Remaining features: {X.shape[1]}")
     
@@ -59,7 +56,7 @@ def train_T_O_31_ensemble_with_fs():
         w2 = trial.suggest_float('weight2', 1.0, 15.0)
         cw = {0: w0, 1: 1.0, 2: w2}
         
-        top_k = trial.suggest_int('top_k', 30, max_features)
+        top_k = trial.suggest_int('top_k', min(30, max_features), max_features)
         
         oof_preds = np.zeros(len(X))
         for train_idx, val_idx in skf.split(X, y):
@@ -103,7 +100,7 @@ def train_T_O_31_ensemble_with_fs():
         w2 = trial.suggest_float('weight2', 1.0, 15.0)
         cw = [w0, 1.0, w2]
         
-        top_k = trial.suggest_int('top_k', 30, max_features)
+        top_k = trial.suggest_int('top_k', min(30, max_features), max_features)
         
         oof_preds = np.zeros(len(X))
         for train_idx, val_idx in skf.split(X, y):
@@ -191,12 +188,15 @@ def train_T_O_31_ensemble_with_fs():
         else:
             ensemble_preds[i] = 1
     
+    # NOTE: These metrics are calculated on the same OOF predictions used to tune the thresholds,
+    # so they are optimistic (in-sample) and may not perfectly reflect true out-of-sample performance.
     final_f1 = f1_score(y, ensemble_preds, average='macro')
     final_acc = accuracy_score(y, ensemble_preds)
     
     print(f"=== T_O_31 Ensemble (w/ Feature Selection + Threshold Tuning) Validation Results ===")
-    print(f"Macro F1 Score: {final_f1:.4f}")
-    print(f"Accuracy:       {final_acc:.4f}")
+    print(f"** NOTE: The following metrics are optimistic IN-SAMPLE tuning results for thresholds **")
+    print(f"Macro F1 Score (In-Sample): {final_f1:.4f}")
+    print(f"Accuracy (In-Sample):       {final_acc:.4f}")
     print(f"==================================================================================")
     
     print("6. Training Final Models on full dataset and saving...")
@@ -226,6 +226,9 @@ def train_T_O_31_ensemble_with_fs():
     joblib.dump(final_top_cols_lgbm.tolist(), features_lgbm_path)
     joblib.dump(final_top_cols_cb.tolist(), features_cb_path)
     joblib.dump(best_thr, thr_path)
+    
+    encoder_path = 'dataset/T_O_31/encoder_T_O_31.joblib'
+    joblib.dump({'encoder': encoder, 'object_cols': object_cols}, encoder_path)
     
     print("All done!")
 

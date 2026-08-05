@@ -33,28 +33,17 @@ def train_A_31_ensemble():
     zero_var_cols = [col for col in numeric_cols if X[col].std() == 0]
     X.drop(columns=zero_var_cols, inplace=True)
     
-    from sklearn.preprocessing import LabelEncoder
-    object_cols = X.select_dtypes(include=['object']).columns
-    for col in object_cols:
-        le = LabelEncoder()
-        X[col] = le.fit_transform(X[col].astype(str))
+    from src.preprocess import encode_categorical
+    X, encoder, object_cols = encode_categorical(X)
     
     print(f"Remaining features: {X.shape[1]}")
     
-    print("2.5. Extracting Baseline Feature Importances...")
-    base_lgbm = LGBMClassifier(random_state=42)
-    base_lgbm.fit(X, y)
-    importances = base_lgbm.feature_importances_
-    feat_imp = pd.Series(importances, index=X.columns).sort_values(ascending=False)
-    sorted_features = feat_imp.index.tolist()
-    
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    max_features = min(300, X.shape[1])
     
     print("3. Running Optuna Tuning for LightGBM (20 trials, including top_k)...")
     def objective_lgbm(trial):
-        top_k = trial.suggest_int('top_k', 50, 300)
-        selected_features = sorted_features[:top_k]
-        X_sub = X[selected_features]
+        top_k = trial.suggest_int('top_k', 50, max_features)
         
         params = {
             'n_estimators': trial.suggest_int('n_estimators', 50, 150),
@@ -69,13 +58,19 @@ def train_A_31_ensemble():
         w2 = trial.suggest_float('weight2', 1.0, 10.0)
         cw = {0: w0, 1: 1.0, 2: w2}
         
-        oof_preds = np.zeros(len(X_sub))
-        for train_idx, val_idx in skf.split(X_sub, y):
-            X_tr, y_tr = X_sub.iloc[train_idx], y.iloc[train_idx]
-            X_val, y_val = X_sub.iloc[val_idx], y.iloc[val_idx]
+        oof_preds = np.zeros(len(X))
+        for train_idx, val_idx in skf.split(X, y):
+            X_tr, y_tr = X.iloc[train_idx], y.iloc[train_idx]
+            X_val, y_val = X.iloc[val_idx], y.iloc[val_idx]
+            
+            base_model = LGBMClassifier(random_state=42, verbose=-1, class_weight=cw)
+            base_model.fit(X_tr, y_tr)
+            top_idx = np.argsort(base_model.feature_importances_)[::-1][:top_k]
+            top_cols = X_tr.columns[top_idx]
+            
             model = LGBMClassifier(**params, class_weight=cw)
-            model.fit(X_tr, y_tr)
-            oof_preds[val_idx] = model.predict(X_val)
+            model.fit(X_tr[top_cols], y_tr)
+            oof_preds[val_idx] = model.predict(X_val[top_cols])
         return f1_score(y, oof_preds, average='macro')
 
     study_lgbm = optuna.create_study(direction='maximize')
@@ -89,9 +84,7 @@ def train_A_31_ensemble():
     
     print("4. Running Optuna Tuning for CatBoost (20 trials, including top_k)...")
     def objective_cb(trial):
-        top_k = trial.suggest_int('top_k', 50, 300)
-        selected_features = sorted_features[:top_k]
-        X_sub = X[selected_features]
+        top_k = trial.suggest_int('top_k', 50, max_features)
         
         params = {
             'iterations': trial.suggest_int('iterations', 50, 150),
@@ -104,13 +97,19 @@ def train_A_31_ensemble():
         w2 = trial.suggest_float('weight2', 1.0, 10.0)
         cw = [w0, 1.0, w2]
         
-        oof_preds = np.zeros(len(X_sub))
-        for train_idx, val_idx in skf.split(X_sub, y):
-            X_tr, y_tr = X_sub.iloc[train_idx], y.iloc[train_idx]
-            X_val, y_val = X_sub.iloc[val_idx], y.iloc[val_idx]
+        oof_preds = np.zeros(len(X))
+        for train_idx, val_idx in skf.split(X, y):
+            X_tr, y_tr = X.iloc[train_idx], y.iloc[train_idx]
+            X_val, y_val = X.iloc[val_idx], y.iloc[val_idx]
+            
+            base_model = CatBoostClassifier(iterations=50, random_seed=42, verbose=0, class_weights=cw)
+            base_model.fit(X_tr, y_tr)
+            top_idx = np.argsort(base_model.feature_importances_)[::-1][:top_k]
+            top_cols = X_tr.columns[top_idx]
+            
             model = CatBoostClassifier(**params, class_weights=cw)
-            model.fit(X_tr, y_tr)
-            oof_preds[val_idx] = model.predict(X_val).flatten()
+            model.fit(X_tr[top_cols], y_tr)
+            oof_preds[val_idx] = model.predict(X_val[top_cols]).flatten()
         return f1_score(y, oof_preds, average='macro')
 
     study_cb = optuna.create_study(direction='maximize')
@@ -126,23 +125,29 @@ def train_A_31_ensemble():
     lgbm_oof_proba = np.zeros((len(X), 3))
     cb_oof_proba = np.zeros((len(X), 3))
     
-    X_lgbm = X[sorted_features[:lgbm_top_k]]
-    X_cb = X[sorted_features[:cb_top_k]]
-    
     for train_idx, val_idx in skf.split(X, y):
-        y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
+        X_tr, y_tr = X.iloc[train_idx], y.iloc[train_idx]
+        X_val, y_val = X.iloc[val_idx], y.iloc[val_idx]
         
         # LightGBM
-        X_tr_lgbm, X_val_lgbm = X_lgbm.iloc[train_idx], X_lgbm.iloc[val_idx]
+        base_lgbm = LGBMClassifier(random_state=42, verbose=-1, class_weight=lgbm_cw)
+        base_lgbm.fit(X_tr, y_tr)
+        top_idx_lgbm = np.argsort(base_lgbm.feature_importances_)[::-1][:lgbm_top_k]
+        top_cols_lgbm = X_tr.columns[top_idx_lgbm]
+        
         model_lgbm = LGBMClassifier(**best_lgbm_params, class_weight=lgbm_cw)
-        model_lgbm.fit(X_tr_lgbm, y_tr)
-        lgbm_oof_proba[val_idx] = model_lgbm.predict_proba(X_val_lgbm)
+        model_lgbm.fit(X_tr[top_cols_lgbm], y_tr)
+        lgbm_oof_proba[val_idx] = model_lgbm.predict_proba(X_val[top_cols_lgbm])
         
         # CatBoost
-        X_tr_cb, X_val_cb = X_cb.iloc[train_idx], X_cb.iloc[val_idx]
+        base_cb = CatBoostClassifier(iterations=50, random_seed=42, verbose=0, class_weights=cb_cw)
+        base_cb.fit(X_tr, y_tr)
+        top_idx_cb = np.argsort(base_cb.feature_importances_)[::-1][:cb_top_k]
+        top_cols_cb = X_tr.columns[top_idx_cb]
+        
         model_cb = CatBoostClassifier(**best_cb_params, class_weights=cb_cw)
-        model_cb.fit(X_tr_cb, y_tr)
-        cb_oof_proba[val_idx] = model_cb.predict_proba(X_val_cb)
+        model_cb.fit(X_tr[top_cols_cb], y_tr)
+        cb_oof_proba[val_idx] = model_cb.predict_proba(X_val[top_cols_cb])
         
     # Soft Voting
     ensemble_proba = (lgbm_oof_proba + cb_oof_proba) / 2.0
@@ -158,11 +163,19 @@ def train_A_31_ensemble():
     print(f"=======================================================================")
     
     print("6. Training Final Models on full dataset and saving...")
+    base_lgbm = LGBMClassifier(random_state=42, verbose=-1, class_weight=lgbm_cw)
+    base_lgbm.fit(X, y)
+    final_top_cols_lgbm = X.columns[np.argsort(base_lgbm.feature_importances_)[::-1][:lgbm_top_k]]
+    
+    base_cb = CatBoostClassifier(iterations=50, random_seed=42, verbose=0, class_weights=cb_cw)
+    base_cb.fit(X, y)
+    final_top_cols_cb = X.columns[np.argsort(base_cb.feature_importances_)[::-1][:cb_top_k]]
+    
     final_lgbm = LGBMClassifier(**best_lgbm_params, class_weight=lgbm_cw)
-    final_lgbm.fit(X_lgbm, y)
+    final_lgbm.fit(X[final_top_cols_lgbm], y)
     
     final_cb = CatBoostClassifier(**best_cb_params, class_weights=cb_cw)
-    final_cb.fit(X_cb, y)
+    final_cb.fit(X[final_top_cols_cb], y)
     
     lgbm_path = 'dataset/A_31/model_A_31_lgbm.joblib'
     cb_path = 'dataset/A_31/model_A_31_cb.joblib'
@@ -173,8 +186,11 @@ def train_A_31_ensemble():
     
     joblib.dump(final_lgbm, lgbm_path)
     joblib.dump(final_cb, cb_path)
-    joblib.dump(X_lgbm.columns.tolist(), features_lgbm_path)
-    joblib.dump(X_cb.columns.tolist(), features_cb_path)
+    joblib.dump(final_top_cols_lgbm.tolist(), features_lgbm_path)
+    joblib.dump(final_top_cols_cb.tolist(), features_cb_path)
+    
+    encoder_path = 'dataset/A_31/encoder_A_31.joblib'
+    joblib.dump({'encoder': encoder, 'object_cols': object_cols}, encoder_path)
     
     print("All done!")
 
