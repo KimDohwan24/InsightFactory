@@ -26,4 +26,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // 현재는 JWT 기반 Stateless 인증이므로 서버에서 세션을 파기할 필요가 없습니다.
+        // 추후 Redis 기반 Refresh Token을 도입할 경우, 여기서 토큰을 무효화(블랙리스트) 처리합니다.
+        return ResponseEntity.ok("로그아웃 되었습니다. 클라이언트 측에서 토큰을 삭제해 주세요.");
+    }
 }

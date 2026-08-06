@@ -5,6 +5,7 @@ import com.insightfactory.mesbackend.dto.LoginRequest;
 import com.insightfactory.mesbackend.entity.User;
 import com.insightfactory.mesbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,18 +16,18 @@ import java.util.Optional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // BCrypt 주입
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
         // 1. DB에서 사용자 조회
         Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
 
-        // 2. 임시 하드코딩 처리 (DB에 유저가 아예 없을 경우 테스트용 어드민 계정을 자동 생성)
-        // 실제 운영 환경에서는 회원가입 로직과 비밀번호 암호화(BCrypt)가 필수입니다.
+        // 2. 유저가 없을 경우 테스트용 어드민 계정을 자동 생성 (비밀번호 BCrypt 암호화 적용)
         if (userOptional.isEmpty() && "admin".equals(request.getUsername())) {
             User newUser = new User();
             newUser.setUsername("admin");
-            newUser.setPassword("1234"); // 비밀번호 암호화 생략 (임시)
+            newUser.setPassword(passwordEncoder.encode("1234")); // BCrypt로 암호화하여 저장
             newUser.setRole("ADMIN");
             userRepository.save(newUser);
             userOptional = Optional.of(newUser);
@@ -38,8 +39,8 @@ public class AuthService {
 
         User user = userOptional.get();
 
-        // 3. 비밀번호 확인
-        if (!user.getPassword().equals(request.getPassword())) {
+        // 3. 비밀번호 확인 (BCrypt matches 사용)
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
