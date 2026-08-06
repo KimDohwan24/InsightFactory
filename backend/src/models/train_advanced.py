@@ -28,16 +28,6 @@ for col in ['LINE', 'PRODUCT_CODE']:
         le = LabelEncoder()
         X[col] = le.fit_transform(X[col].astype(str))
 
-# Drop zero-variance columns
-nunique = X.nunique(dropna=False)
-X = X.drop(columns=nunique[nunique <= 1].index)
-print(f"Shape after dropping zero-variance features: {X.shape}")
-
-# Impute missing values
-print("Imputing missing values with median...")
-imputer = SimpleImputer(strategy='median')
-X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
-
 kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 lgbm_train_f1, lgbm_val_f1 = [], []
@@ -46,9 +36,23 @@ lr_train_f1, lr_val_f1 = [], []
 TOP_K = 30
 print(f"\nStarting 5-Fold CV (Selecting Top {TOP_K} features per fold)...")
 
-for fold, (train_idx, val_idx) in enumerate(kf.split(X_imputed, y)):
-    X_train, y_train = X_imputed.iloc[train_idx], y.iloc[train_idx]
-    X_val, y_val = X_imputed.iloc[val_idx], y.iloc[val_idx]
+for fold, (train_idx, val_idx) in enumerate(kf.split(X, y)):
+    X_train, y_train = X.iloc[train_idx].copy(), y.iloc[train_idx].copy()
+    X_val, y_val = X.iloc[val_idx].copy(), y.iloc[val_idx].copy()
+    
+    # Drop zero-variance columns (prevent data leakage)
+    nunique = X_train.nunique(dropna=False)
+    cols_to_keep = nunique[nunique > 1].index
+    X_train = X_train[cols_to_keep]
+    X_val = X_val[cols_to_keep]
+    
+    # Impute missing values
+    imputer = SimpleImputer(strategy='median')
+    X_train_cols = X_train.columns
+    X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train_cols)
+    X_val = pd.DataFrame(imputer.transform(X_val), columns=X_train_cols)
+
+
     
     # 1. Preliminary Feature Selection using LightGBM
     fs_model = LGBMClassifier(random_state=42, n_jobs=-1, max_depth=5, n_estimators=50, verbose=-1)
@@ -61,12 +65,11 @@ for fold, (train_idx, val_idx) in enumerate(kf.split(X_imputed, y)):
     X_train_sel = X_train[top_k_features]
     X_val_sel = X_val[top_k_features]
     
-    # 2. Train LightGBM with Top K
     lgbm = LGBMClassifier(
         random_state=42, n_jobs=-1, verbose=-1,
         max_depth=4, num_leaves=10, min_child_samples=20,
         learning_rate=0.05, n_estimators=100,
-        subsample=0.8, colsample_bytree=0.8, class_weight='balanced'
+        subsample=0.8, subsample_freq=1, colsample_bytree=0.8, class_weight='balanced'
     )
     lgbm.fit(X_train_sel, y_train)
     

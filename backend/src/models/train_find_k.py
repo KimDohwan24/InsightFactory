@@ -60,7 +60,7 @@ for k in K_LIST:
             random_state=42, n_jobs=-1, verbose=-1,
             max_depth=4, num_leaves=10, min_child_samples=20,
             learning_rate=0.05, n_estimators=100,
-            subsample=0.8, colsample_bytree=0.8, class_weight='balanced'
+            subsample=0.8, subsample_freq=1, colsample_bytree=0.8, class_weight='balanced'
         )
         lgbm.fit(X_train_sel, y_train)
         
