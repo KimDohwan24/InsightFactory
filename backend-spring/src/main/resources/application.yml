@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/insightfactory
+    username: postgres
+    password: password # 로컬 DB 비밀번호로 변경해서 사용하세요
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update # 엔티티 변경 시 DB 스키마 자동 업데이트 (운영 환경에서는 validate 또는 none 사용)
+    show-sql: true # 실행되는 JPA 쿼리를 콘솔에 출력
+    properties:
+      hibernate:
+        format_sql: true # 콘솔에 출력되는 쿼리를 보기 좋게 포맷팅
+        default_schema: public
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080 # Spring Boot 서버 포트 (FastAPI가 보통 8000번을 쓰므로 8080 유지)
+
+springdoc:
+  swagger-ui:
+    path: /swagger # 기본 주소를 /swagger-ui/index.html 대신 /swagger로 설정
+    disable-swagger-default-url: true
+    display-request-duration: true
+  api-docs:
+    path: /api-docs
