@@ -18,25 +18,40 @@ export default function Statistics() {
   const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState('A_31');
 
+  const [error, setError] = useState(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchStatistics();
+      setData(result);
+    } catch (err) {
+      console.error(err);
+      setError(err);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const result = await fetchStatistics();
-        setData(result);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
 
-  if (loading || !data) {
+  if (loading || (!data && !error)) {
     return (
       <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
         <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <div style={{ color: 'var(--color-error)' }}>데이터를 불러오는데 실패했습니다.</div>
+        <button className="btn-primary" onClick={loadData} style={{ marginTop: '16px' }}>다시 시도</button>
       </div>
     );
   }
@@ -83,11 +98,13 @@ export default function Statistics() {
               <ResponsiveContainer>
                 <LineChart data={prodTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
-                  <XAxis dataKey="name" stroke="var(--color-muted)" fontSize={12} />
+                  <XAxis dataKey="time" stroke="var(--color-muted)" fontSize={12} />
                   <YAxis stroke="var(--color-muted)" fontSize={12} />
                   <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-hairline)', color: 'var(--color-ink)' }} />
                   <Legend />
-                  <Line type="monotone" dataKey="quantity" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="생산량" />
+                  <Line type="monotone" dataKey="A_31" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="A_31 생산량" />
+                  <Line type="monotone" dataKey="T_31" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="T_31 생산량" />
+                  <Line type="monotone" dataKey="O_31" stroke="var(--color-warning)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="O_31 생산량" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -100,11 +117,11 @@ export default function Statistics() {
               <ResponsiveContainer>
                 <LineChart data={defectTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
-                  <XAxis dataKey="name" stroke="var(--color-muted)" fontSize={12} />
+                  <XAxis dataKey="time" stroke="var(--color-muted)" fontSize={12} />
                   <YAxis stroke="var(--color-muted)" fontSize={12} />
                   <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-hairline)' }} />
                   <Legend />
-                  <Line type="monotone" dataKey="rate" stroke="var(--color-error)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="불량률(%)" />
+                  <Line type="monotone" dataKey="defect" stroke="var(--color-error)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="불량(건)" />
                 </LineChart>
               </ResponsiveContainer>
             </div>

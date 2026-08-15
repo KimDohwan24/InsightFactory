@@ -5,25 +5,39 @@ function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchDashboardData();
+      setData(result);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const result = await fetchDashboardData();
-        setData(result);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
 
-  if (loading || !data) {
+  if (loading || (!data && !error)) {
     return (
       <main className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div>데이터를 불러오는 중입니다...</div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: 'var(--color-error)' }}>데이터를 불러오는데 실패했습니다.</div>
+        <button className="btn-primary" onClick={loadData} style={{ marginTop: '16px' }}>다시 시도</button>
       </main>
     );
   }

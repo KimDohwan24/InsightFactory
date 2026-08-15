@@ -16,18 +16,24 @@ function Production() {
   const [prodData, setProdData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchProductionData(selectedProduct, selectedLine);
+      setProdData(result);
+    } catch (err) {
+      console.error(err);
+      setError(err);
+      setProdData(null); // prevent confused prior data
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const result = await fetchProductionData(selectedProduct, selectedLine);
-        setProdData(result);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, [selectedProduct, selectedLine]);
 
@@ -44,10 +50,19 @@ function Production() {
     ? ((prodData.lotInfo.currentQuantity / prodData.lotInfo.targetQuantity) * 100).toFixed(1)
     : '0.0';
 
-  if (loading || !prodData) {
+  if (loading || (!prodData && !error)) {
     return (
       <main className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div>데이터를 불러오는 중입니다...</div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: 'var(--color-error)' }}>데이터를 불러오는데 실패했습니다.</div>
+        <button className="btn-primary" onClick={loadData} style={{ marginTop: '16px' }}>다시 시도</button>
       </main>
     );
   }

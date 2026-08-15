@@ -8,22 +8,45 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check for saved auth state on mount
-    const savedAuth = localStorage.getItem('isAuthenticated');
-    if (savedAuth === 'true') {
-      setIsAuthenticated(true);
+    const isDemo = import.meta.env.VITE_USE_MOCK === 'true';
+    if (isDemo) {
+      const savedAuth = localStorage.getItem('isAuthenticated');
+      if (savedAuth === 'true') {
+        setIsAuthenticated(true);
+      }
     }
     setLoading(false);
   }, []);
 
   const login = async (username, password) => {
-    // TODO: Replace with actual API call
-    // Mock login logic
-    if (username && password) {
-      setIsAuthenticated(true);
-      localStorage.setItem('isAuthenticated', 'true');
-      return true;
+    const isDemo = import.meta.env.VITE_USE_MOCK === 'true';
+    
+    // Mock login logic for demo
+    if (isDemo) {
+      if (username === 'admin' && password === 'admin') {
+        setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
+        return true;
+      }
+      return false;
     }
-    return false;
+    
+    // Replace with actual API call
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (response.ok) {
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
   };
 
   const logout = () => {

@@ -88,13 +88,20 @@ export const fetchProductionData = async (product, line) => {
 };
 
 export const fetchWorkOrders = async () => {
+  let data;
   if (USE_MOCK) {
     await delay(700);
-    return workOrdersMockData;
+    data = workOrdersMockData;
+  } else {
+    const response = await fetch('/api/work-orders');
+    if (!response.ok) throw new Error('Failed to fetch work orders');
+    data = await response.json();
   }
-  const response = await fetch('/api/work-orders');
-  if (!response.ok) throw new Error('Failed to fetch work orders');
-  return response.json();
+  return data.map(wo => ({
+    ...wo,
+    currentQuantity: wo.currentQuantity ?? 0,
+    history: wo.history ?? []
+  }));
 };
 
 export const fetchAIPredictions = async (product) => {

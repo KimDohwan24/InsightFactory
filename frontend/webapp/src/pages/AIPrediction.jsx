@@ -7,26 +7,41 @@ export default function AIPrediction() {
   const [loading, setLoading] = useState(true);
   const [selectedPred, setSelectedPred] = useState(null);
 
+  const [error, setError] = useState(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchAIPredictions(selectedProduct);
+      setData(result);
+      setSelectedPred(null);
+    } catch (err) {
+      console.error(err);
+      setError(err);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const result = await fetchAIPredictions(selectedProduct);
-        setData(result);
-        setSelectedPred(null);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, [selectedProduct]);
 
-  if (loading || !data) {
+  if (loading || (!data && !error)) {
     return (
       <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
         <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <div style={{ color: 'var(--color-error)' }}>데이터를 불러오는데 실패했습니다.</div>
+        <button className="btn-primary" onClick={loadData} style={{ marginTop: '16px' }}>다시 시도</button>
       </div>
     );
   }

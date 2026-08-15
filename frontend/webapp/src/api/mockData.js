@@ -9,8 +9,8 @@ export const dashboardMockData = {
     { line: 'T100306', product: 'O_31', status: 'active', active: true }
   ],
   recentAlarms: [
-    { id: 1, message: 'T010306 Pressure Drop', time: '10:23 AM' },
-    { id: 2, message: 'T100304 Temperature High', time: '09:45 AM' }
+    { id: 1, message: 'T010306 Pressure Drop', time: '10:23 AM', level: 'error', type: 'Pressure' },
+    { id: 2, message: 'T100304 Temperature High', time: '09:45 AM', level: 'warning', type: 'Temperature' }
   ],
   recentWorkOrders: [
     { id: 'WO-2023-001', product: 'A_31', status: 'In Progress', progress: 85 },
@@ -53,10 +53,10 @@ export const aiPredictionMockData = {
     'O_31': { version: 'v1.1.0', f1Score: 0.91, accuracy: 0.94, precision: 0.92, recall: 0.90, predictions: 32000 }
   },
   predictions: [
-    { id: 'PRD-A-001', product: 'A_31', line: 'T010305', quality: 0.99, yClass: 1, time: '10:05:22' },
-    { id: 'PRD-A-002', product: 'A_31', line: 'T010306', quality: 0.12, yClass: 0, time: '10:06:11' },
-    { id: 'PRD-T-001', product: 'T_31', line: 'T100304', quality: 0.98, yClass: 1, time: '10:06:45' },
-    { id: 'PRD-O-001', product: 'O_31', line: 'T100306', quality: 0.88, yClass: 2, time: '10:07:02' }
+    { id: 'PRD-A-001', product: 'A_31', line: 'T010305', quality: 0.99, yClass: 1, time: '10:05:22', actualYClass: null },
+    { id: 'PRD-A-002', product: 'A_31', line: 'T010306', quality: 0.12, yClass: 0, time: '10:06:11', actualYClass: null },
+    { id: 'PRD-T-001', product: 'T_31', line: 'T100304', quality: 0.98, yClass: 1, time: '10:06:45', actualYClass: null },
+    { id: 'PRD-O-001', product: 'O_31', line: 'T100306', quality: 0.88, yClass: 2, time: '10:07:02', actualYClass: null }
   ],
   featureImportance: [
     { feature: 'X_1', importance: 0.35 },
