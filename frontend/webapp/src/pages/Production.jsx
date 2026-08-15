@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchProductionData } from '../api';
 
 const PRODUCTS = ['All', 'A_31', 'T_31', 'O_31'];
@@ -17,30 +17,39 @@ function Production() {
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState(null);
+  const requestIdRef = useRef(0);
 
   const loadData = async () => {
+    const currentId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
       const result = await fetchProductionData(selectedProduct, selectedLine);
-      setProdData(result);
-      if (result && result.sensorData) {
-        setSensorData(result.sensorData);
-      } else {
-        setSensorData({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
+      if (currentId === requestIdRef.current) {
+        setProdData(result);
+        if (result && result.sensorData) {
+          setSensorData(result.sensorData);
+        } else {
+          setSensorData({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
+        }
       }
     } catch (err) {
-      console.error(err);
-      setError(err);
-      setProdData(null); // prevent confused prior data
-      setSensorData({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
+      if (currentId === requestIdRef.current) {
+        console.error(err);
+        setError(err);
+        setProdData(null); // prevent confused prior data
+        setSensorData({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
+      }
     } finally {
-      setLoading(false);
+      if (currentId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     loadData();
+    return () => { requestIdRef.current++; };
   }, [selectedProduct, selectedLine]);
 
   const availableLines = PRODUCT_LINE_MAP[selectedProduct] || PRODUCT_LINE_MAP['All'];

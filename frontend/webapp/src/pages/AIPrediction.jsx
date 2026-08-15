@@ -5,6 +5,7 @@ export default function AIPrediction() {
   const [selectedProduct, setSelectedProduct] = useState('A_31');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPred, setSelectedPred] = useState(null);
   const [error, setError] = useState(null);
   const requestIdRef = useRef(0);
 

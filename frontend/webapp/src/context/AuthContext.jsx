@@ -8,19 +8,24 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check for saved auth state on mount
-    const isDemo = import.meta.env.VITE_USE_MOCK === 'true';
-    if (isDemo) {
-      const savedAuth = localStorage.getItem('isAuthenticated');
-      if (savedAuth === 'true') {
-        setIsAuthenticated(true);
+    try {
+      const isDemo = import.meta.env.VITE_USE_MOCK === 'true';
+      if (isDemo) {
+        const savedAuth = localStorage.getItem('isAuthenticated');
+        if (savedAuth === 'true') {
+          setIsAuthenticated(true);
+        }
+      } else {
+        const token = localStorage.getItem('jwt_token');
+        if (token) {
+          setIsAuthenticated(true);
+        }
       }
-    } else {
-      const token = localStorage.getItem('jwt_token');
-      if (token) {
-        setIsAuthenticated(true);
-      }
+    } catch (e) {
+      console.error('localStorage getItem error:', e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (username, password) => {
@@ -45,9 +50,17 @@ export const AuthProvider = ({ children }) => {
       });
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('jwt_token', data.token || data.access_token);
-        setIsAuthenticated(true);
-        return true;
+        const token = data.token || data.access_token;
+        if (typeof token === 'string' && token.trim() !== '') {
+          try {
+            localStorage.setItem('jwt_token', token);
+          } catch (e) {
+            console.error('localStorage setItem error:', e);
+          }
+          setIsAuthenticated(true);
+          return true;
+        }
+        return false;
       }
       return false;
     } catch (err) {
@@ -58,8 +71,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('jwt_token');
+    try {
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('jwt_token');
+    } catch (e) {
+      console.error('localStorage removeItem error:', e);
+    }
   };
 
   if (loading) {
