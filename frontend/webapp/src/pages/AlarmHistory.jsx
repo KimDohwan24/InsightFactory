@@ -1,33 +1,27 @@
-import { useState, useMemo } from 'react';
-
-const INITIAL_ALARMS = [
-  { 
-    id: 'AL-1004', time: '2026-08-04T14:20:00', line: 'T010306', severity: 'Critical', 
-    message: '설비 과열 경고 (Temp > 35°C)', isAcked: false, 
-    details: '냉각 팬 이상 또는 냉매 부족 의심. 즉각적인 라인 정지 및 점검 권장.' 
-  },
-  { 
-    id: 'AL-1003', time: '2026-08-04T11:05:00', line: 'T010305', severity: 'Info', 
-    message: '라인 정기 유지보수 완료', isAcked: true, 
-    details: '필터 교체 및 윤활유 보충 완료됨. 센서 X_1 영점 조정 완료.' 
-  },
-  { 
-    id: 'AL-1002', time: '2026-08-04T10:30:00', line: 'T100306', severity: 'Critical', 
-    message: 'AI 품질 예측 - 불량(0) 감지', isAcked: false, 
-    details: 'LOT-260804-T31 제품 분석 결과 Y_Class=0 판정. O_31, T_31 제품 스펙 확인 요망.' 
-  },
-  { 
-    id: 'AL-1001', time: '2026-08-04T09:15:00', line: 'T050304', severity: 'Warning', 
-    message: '진동 수치 일시적 임계치 초과', isAcked: true, 
-    details: 'X_3 센서 진동 0.05 -> 0.12 일시 상승 후 복구. 지속 모니터링 요망.' 
-  },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { fetchAlarms } from '../api';
 
 const LINES = ['All', 'T010305', 'T010306', 'T050304', 'T050307', 'T100304', 'T100306'];
 const SEVERITIES = ['All', 'Critical', 'Warning', 'Info'];
 
 export default function AlarmHistory() {
-  const [alarms, setAlarms] = useState(INITIAL_ALARMS);
+  const [alarms, setAlarms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchAlarms();
+        setAlarms(result);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
   
   // Today date formatted as YYYY-MM-DD for default filter
   const today = new Date();
@@ -72,6 +66,14 @@ export default function AlarmHistory() {
   const kpiTotal = alarms.filter(a => a.time.startsWith(todayStr)).length;
   const kpiUnacked = alarms.filter(a => !a.isAcked).length;
   const kpiCritical = alarms.filter(a => a.time.startsWith(todayStr) && a.severity === 'Critical').length;
+
+  if (loading) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-content" style={{ position: 'relative' }}>

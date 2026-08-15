@@ -1,34 +1,56 @@
 import { useState, useEffect } from 'react';
+import { fetchProductionData } from '../api';
 
-// Mock data for Production (Micro View)
 const PRODUCTS = ['All', 'A_31', 'T_31', 'O_31'];
-const LINES = ['All', 'T010305', 'T010306', 'T050304', 'T050307', 'T100304', 'T100306'];
-
-const MOCK_PROD_DATA = {
-  lotInfo: {
-    lotId: null,
-    startTime: null,
-    targetQuantity: null,
-    currentQuantity: null,
-    status: null
-  },
-  aiPredictions: [],
-  equipmentDetails: {
-    temperature: null,
-    pressure: null,
-    vibration: null,
-    uptime: null
-  }
+const PRODUCT_LINE_MAP = {
+  'All': ['All', 'T010305', 'T010306', 'T050304', 'T050307', 'T100304', 'T100306'],
+  'A_31': ['All', 'T010305', 'T010306', 'T050304', 'T050307'],
+  'T_31': ['All', 'T100304', 'T100306'],
+  'O_31': ['All', 'T100304', 'T100306']
 };
 
 function Production() {
   const [selectedProduct, setSelectedProduct] = useState('All');
   const [selectedLine, setSelectedLine] = useState('All');
   const [sensorData, setSensorData] = useState({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
+  const [prodData, setProdData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const progressPercent = MOCK_PROD_DATA.lotInfo.currentQuantity && MOCK_PROD_DATA.lotInfo.targetQuantity
-    ? ((MOCK_PROD_DATA.lotInfo.currentQuantity / MOCK_PROD_DATA.lotInfo.targetQuantity) * 100).toFixed(1)
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchProductionData(selectedProduct, selectedLine);
+        setProdData(result);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [selectedProduct, selectedLine]);
+
+  const availableLines = PRODUCT_LINE_MAP[selectedProduct] || PRODUCT_LINE_MAP['All'];
+
+  const handleProductChange = (prod) => {
+    setSelectedProduct(prod);
+    if (!PRODUCT_LINE_MAP[prod].includes(selectedLine)) {
+      setSelectedLine('All');
+    }
+  };
+
+  const progressPercent = prodData?.lotInfo?.currentQuantity && prodData?.lotInfo?.targetQuantity
+    ? ((prodData.lotInfo.currentQuantity / prodData.lotInfo.targetQuantity) * 100).toFixed(1)
     : '0.0';
+
+  if (loading || !prodData) {
+    return (
+      <main className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="dashboard-content">
@@ -46,7 +68,7 @@ function Production() {
               <button 
                 key={prod}
                 className={`category-tab ${selectedProduct === prod ? 'active' : ''}`}
-                onClick={() => setSelectedProduct(prod)}
+                onClick={() => handleProductChange(prod)}
               >
                 {prod}
               </button>
@@ -57,7 +79,7 @@ function Production() {
         <div className="filter-group">
           <span className="filter-label">Line:</span>
           <div className="tab-list">
-            {LINES.map(line => (
+            {availableLines.map(line => (
               <button 
                 key={line}
                 className={`category-tab ${selectedLine === line ? 'active' : ''}`}
@@ -77,30 +99,30 @@ function Production() {
           <div className="production-stats" style={{ marginBottom: '16px' }}>
             <div className="stat-box">
               <span className="stat-label">LOT ID</span>
-              <span className="stat-value" style={{ fontSize: '24px' }}>{MOCK_PROD_DATA.lotInfo.lotId ?? '-'}</span>
+              <span className="stat-value" style={{ fontSize: '24px' }}>{prodData.lotInfo.lotId ?? '-'}</span>
             </div>
             <div className="stat-box">
               <span className="stat-label">시작 시간</span>
-              <span className="stat-value" style={{ fontSize: '24px' }}>{MOCK_PROD_DATA.lotInfo.startTime ? MOCK_PROD_DATA.lotInfo.startTime.split(' ')[1] : '-'}</span>
+              <span className="stat-value" style={{ fontSize: '24px' }}>{prodData.lotInfo.startTime ? prodData.lotInfo.startTime.split(' ')[1] : '-'}</span>
             </div>
             <div className="stat-box">
               <span className="stat-label">상태</span>
               <span 
                 className={`badge ${
-                  MOCK_PROD_DATA.lotInfo.status === 'Error' ? 'badge-error' :
-                  MOCK_PROD_DATA.lotInfo.status === 'Idle' || MOCK_PROD_DATA.lotInfo.status === 'Warning' ? 'badge-warning' :
+                  prodData.lotInfo.status === 'Error' ? 'badge-error' :
+                  prodData.lotInfo.status === 'Idle' || prodData.lotInfo.status === 'Warning' ? 'badge-warning' :
                   'badge-success'
                 }`}
-                style={{ visibility: MOCK_PROD_DATA.lotInfo.status ? 'visible' : 'hidden' }}
+                style={{ visibility: prodData.lotInfo.status ? 'visible' : 'hidden' }}
               >
-                {MOCK_PROD_DATA.lotInfo.status}
+                {prodData.lotInfo.status}
               </span>
             </div>
           </div>
           
           <div className="progress-container">
             <div className="progress-header">
-              <span className="progress-label">LOT 생산 진행률 ({MOCK_PROD_DATA.lotInfo.currentQuantity ?? 0} / {MOCK_PROD_DATA.lotInfo.targetQuantity ?? 0})</span>
+              <span className="progress-label">LOT 생산 진행률 ({prodData.lotInfo.currentQuantity ?? 0} / {prodData.lotInfo.targetQuantity ?? 0})</span>
               <span className="progress-percent">{progressPercent}%</span>
             </div>
             <div className="progress-bar-bg">
@@ -115,22 +137,22 @@ function Production() {
         {/* 2. 설비 상세 정보 */}
         <div className="card-dark equipment-card">
           <h3 className="card-title">설비 상세 제원</h3>
-          <div className="equipment-list">
+          <div className="equipment-list" style={{ color: '#fff' }}>
             <div className="equipment-item">
               <span className="eq-line">온도 (Temp)</span>
-              <span className="stat-value" style={{ fontSize: '18px' }}>{MOCK_PROD_DATA.equipmentDetails.temperature ?? '-'}°C</span>
+              <span className="stat-value" style={{ fontSize: '18px', color: '#fff' }}>{prodData.equipmentDetails.temperature ?? '-'}°C</span>
             </div>
             <div className="equipment-item">
               <span className="eq-line">압력 (Pressure)</span>
-              <span className="stat-value" style={{ fontSize: '18px' }}>{MOCK_PROD_DATA.equipmentDetails.pressure ?? '-'} bar</span>
+              <span className="stat-value" style={{ fontSize: '18px', color: '#fff' }}>{prodData.equipmentDetails.pressure ?? '-'} bar</span>
             </div>
             <div className="equipment-item">
               <span className="eq-line">진동 (Vibration)</span>
-              <span className="stat-value" style={{ fontSize: '18px' }}>{MOCK_PROD_DATA.equipmentDetails.vibration ?? '-'} mm/s</span>
+              <span className="stat-value" style={{ fontSize: '18px', color: '#fff' }}>{prodData.equipmentDetails.vibration ?? '-'} mm/s</span>
             </div>
             <div className="equipment-item">
               <span className="eq-line">연속 가동 시간</span>
-              <span className="stat-value" style={{ fontSize: '18px' }}>{MOCK_PROD_DATA.equipmentDetails.uptime ?? '-'}</span>
+              <span className="stat-value" style={{ fontSize: '18px', color: '#fff' }}>{prodData.equipmentDetails.uptime ?? '-'}</span>
             </div>
           </div>
         </div>
@@ -174,7 +196,7 @@ function Production() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_PROD_DATA.aiPredictions.length > 0 ? MOCK_PROD_DATA.aiPredictions.map((pred, idx) => (
+              {prodData.aiPredictions.length > 0 ? prodData.aiPredictions.map((pred, idx) => (
                 <tr key={idx} style={{ borderBottomColor: 'var(--color-surface-dark-elevated)' }}>
                   <td className="code-font">{pred.id}</td>
                   <td>{pred.quality.toFixed(4)}</td>

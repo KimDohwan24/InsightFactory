@@ -1,6 +1,14 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function MainLayout() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   return (
     <div className="dashboard-layout">
       {/* Top Navigation */}
@@ -21,6 +29,13 @@ function MainLayout() {
         </div>
         <div className="nav-user">
           <span className="admin-label">Admin Portal</span>
+          <button 
+            onClick={handleLogout} 
+            className="category-tab" 
+            style={{ marginLeft: '12px', padding: '6px 12px', fontSize: '13px' }}
+          >
+            로그아웃
+          </button>
         </div>
       </nav>
 

@@ -1,26 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-
-// Data initialized with categories but 0 values to show the X-axis structure
-const INITIAL_PROD_TREND = [];
-const INITIAL_DEFECT_TREND = [];
-const INITIAL_PROD_BY_PRODUCT = [
-  { name: 'A_31', quantity: 0 },
-  { name: 'T_31', quantity: 0 },
-  { name: 'O_31', quantity: 0 }
-];
-const INITIAL_PROD_BY_LINE = [
-  { name: 'T010305', quantity: 0 },
-  { name: 'T010306', quantity: 0 },
-  { name: 'T050304', quantity: 0 },
-  { name: 'T050307', quantity: 0 },
-  { name: 'T100304', quantity: 0 },
-  { name: 'T100306', quantity: 0 }
-];
-const INITIAL_AI_DISTRIBUTION = [];
+import { fetchStatistics } from '../api';
 
 const AI_MODEL_PERFORMANCE = {
   'A_31': { model: '-', version: null, predictions: '-', accuracy: '-', precision: '-', recall: '-', f1Score: '-' },
@@ -31,13 +14,34 @@ const AI_MODEL_PERFORMANCE = {
 const PIE_COLORS = ['#38bdf8', '#fbbf24', '#f87171']; // Success, Warning, Error colors
 
 export default function Statistics() {
-  const [prodTrend] = useState(INITIAL_PROD_TREND);
-  const [defectTrend] = useState(INITIAL_DEFECT_TREND);
-  const [prodByProduct] = useState(INITIAL_PROD_BY_PRODUCT);
-  const [prodByLine] = useState(INITIAL_PROD_BY_LINE);
-  const [aiDist] = useState(INITIAL_AI_DISTRIBUTION);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState('A_31');
 
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchStatistics();
+        setData(result);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
+
+  const { prodTrend, defectTrend, prodByProduct, prodByLine, aiDist } = data;
   const currentStats = AI_MODEL_PERFORMANCE[selectedModel];
 
   return (

@@ -1,10 +1,24 @@
-import { useState } from 'react';
-
-// Initially empty as requested by user
-const INITIAL_EQUIPMENT = [];
+import { useState, useEffect } from 'react';
+import { fetchEquipment } from '../api';
 
 export default function Equipment() {
-  const [equipmentList] = useState(INITIAL_EQUIPMENT);
+  const [equipmentList, setEquipmentList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchEquipment();
+        setEquipmentList(result);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedEq, setSelectedEq] = useState(null);
@@ -28,6 +42,14 @@ export default function Equipment() {
   const kpiRunning = equipmentList.filter(eq => eq.status === 'Running').length;
   const kpiIdle = equipmentList.filter(eq => eq.status === 'Idle').length;
   const kpiError = equipmentList.filter(eq => eq.status === 'Error').length;
+
+  if (loading) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>

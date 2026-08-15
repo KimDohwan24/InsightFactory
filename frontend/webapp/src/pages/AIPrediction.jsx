@@ -1,24 +1,39 @@
-import { useState } from 'react';
-
-// Product Model definitions
-const MODELS = {
-  'A_31': { version: null, f1Score: null, accuracy: null },
-  'T_31': { version: null, f1Score: null, accuracy: null },
-  'O_31': { version: null, f1Score: null, accuracy: null },
-};
-
-// Initial empty predictions as requested
-const INITIAL_PREDICTIONS = [];
+import { useState, useEffect } from 'react';
+import { fetchAIPredictions } from '../api';
 
 export default function AIPrediction() {
   const [selectedProduct, setSelectedProduct] = useState('A_31');
-  const [predictions] = useState(INITIAL_PREDICTIONS);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedPred, setSelectedPred] = useState(null);
 
-  // Filter predictions based on product model
-  const filteredPredictions = predictions.filter(p => p.product === selectedProduct);
-  
-  const currentModel = MODELS[selectedProduct];
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchAIPredictions(selectedProduct);
+        setData(result);
+        setSelectedPred(null);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [selectedProduct]);
+
+  if (loading || !data) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
+
+  const currentModel = data.models[selectedProduct];
+  const filteredPredictions = data.predictions;
+  const featureImportance = data.featureImportance;
   
   // KPI Calculations
   const kpiTotal = filteredPredictions.length;
@@ -45,7 +60,7 @@ export default function AIPrediction() {
         <div className="filter-group">
           <span className="filter-label">분석 대상 모델 (Product):</span>
           <div className="tab-list">
-            {Object.keys(MODELS).map(prod => (
+            {Object.keys(data.models).map(prod => (
               <button 
                 key={prod}
                 className={`category-tab ${selectedProduct === prod ? 'active' : ''}`}
@@ -136,12 +151,11 @@ export default function AIPrediction() {
 
               <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 
-                {/* Confidence */}
                 <div className="card-dark" style={{ border: '1px solid var(--color-hairline)' }}>
                   <h3 className="card-title">Confidence (판정 확신도)</h3>
                   <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '48px', fontWeight: 'bold', color: selectedPred.confidence > 90 ? 'var(--color-success)' : 'var(--color-warning)' }}>
-                      {selectedPred.confidence.toFixed(1)}%
+                    <span style={{ fontSize: '48px', fontWeight: 'bold', color: selectedPred.quality > 0.9 ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                      {(selectedPred.quality * 100).toFixed(1)}%
                     </span>
                     <p style={{ color: 'var(--color-muted)', marginTop: '8px' }}>AI가 해당 판정을 확신하는 정도</p>
                   </div>
@@ -169,14 +183,14 @@ export default function AIPrediction() {
                     해당 제품({selectedProduct})의 최종 판정에 가장 큰 영향을 미친 Top 5 센서 데이터
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {selectedPred.featureImportance && selectedPred.featureImportance.length > 0 ? (
-                      selectedPred.featureImportance.map((fi, idx) => (
+                    {featureImportance && featureImportance.length > 0 ? (
+                      featureImportance.map((fi, idx) => (
                         <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
                           <span style={{ width: '60px', fontFamily: 'var(--font-code)', fontSize: '14px', color: 'var(--color-ink)' }}>{fi.feature}</span>
                           <div className="progress-bar-bg" style={{ flex: 1, margin: '0 16px', height: '12px', backgroundColor: 'var(--color-surface-card)' }}>
-                            <div className="progress-bar-fill" style={{ width: `${fi.contribution}%`, backgroundColor: 'var(--color-primary)' }}></div>
+                            <div className="progress-bar-fill" style={{ width: `${fi.importance * 100}%`, backgroundColor: 'var(--color-primary)' }}></div>
                           </div>
-                          <span style={{ width: '50px', textAlign: 'right', fontSize: '13px', color: 'var(--color-muted)' }}>{fi.contribution.toFixed(1)}%</span>
+                          <span style={{ width: '50px', textAlign: 'right', fontSize: '13px', color: 'var(--color-muted)' }}>{(fi.importance * 100).toFixed(1)}%</span>
                         </div>
                       ))
                     ) : (

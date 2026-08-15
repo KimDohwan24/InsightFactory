@@ -1,17 +1,32 @@
-import { useState } from 'react';
-
-// Mock data for Dashboard (Macro View) - Initialized to empty/null
-const MOCK_DATA = {
-  currentProduction: null,
-  productionGoal: null,
-  defectCount: null,
-  equipmentStatus: [],
-  recentAlarms: [],
-  recentWorkOrders: []
-};
+import { useState, useEffect } from 'react';
+import { fetchDashboardData } from '../api';
 
 function Dashboard() {
-  const [data] = useState(MOCK_DATA);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchDashboardData();
+        setData(result);
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <main className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </main>
+    );
+  }
 
   const achievementRate = data.currentProduction && data.productionGoal 
     ? ((data.currentProduction / data.productionGoal) * 100).toFixed(1) 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchWorkOrders } from '../api';
 
 const PRODUCT_LINE_MAP = {
   'A_31': ['T010305', 'T010306', 'T050304', 'T050307'],
@@ -6,12 +7,26 @@ const PRODUCT_LINE_MAP = {
   'O_31': ['T100304', 'T100306'],
 };
 
-const INITIAL_ORDERS = [];
-
 export default function WorkOrders() {
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchWorkOrders();
+        setOrders(result);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -125,6 +140,14 @@ export default function WorkOrders() {
     const matchStatus = statusFilter === 'All' || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  if (loading) {
+    return (
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>데이터를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-content" style={{ position: 'relative' }}>
