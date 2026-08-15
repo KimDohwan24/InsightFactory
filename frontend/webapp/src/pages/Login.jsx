@@ -22,7 +22,7 @@ function Login() {
     if (success) {
       navigate('/', { replace: true });
     } else {
-      setError('로그인에 실패했습니다. (데모: 임의의 문자 입력)');
+      setError('로그인에 실패했습니다. (데모: admin / admin 입력)');
     }
   };
 
@@ -48,7 +48,7 @@ function Login() {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your ID (ex. admin)"
+              placeholder="Enter your ID (admin)"
               autoComplete="username"
             />
           </div>

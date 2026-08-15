@@ -14,6 +14,11 @@ export const AuthProvider = ({ children }) => {
       if (savedAuth === 'true') {
         setIsAuthenticated(true);
       }
+    } else {
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+        setIsAuthenticated(true);
+      }
     }
     setLoading(false);
   }, []);
@@ -33,12 +38,14 @@ export const AuthProvider = ({ children }) => {
     
     // Replace with actual API call
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('jwt_token', data.token || data.access_token);
         setIsAuthenticated(true);
         return true;
       }
@@ -52,6 +59,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('jwt_token');
   };
 
   if (loading) {

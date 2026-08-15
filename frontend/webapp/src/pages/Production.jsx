@@ -24,10 +24,16 @@ function Production() {
     try {
       const result = await fetchProductionData(selectedProduct, selectedLine);
       setProdData(result);
+      if (result && result.sensorData) {
+        setSensorData(result.sensorData);
+      } else {
+        setSensorData({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
+      }
     } catch (err) {
       console.error(err);
       setError(err);
       setProdData(null); // prevent confused prior data
+      setSensorData({ x_1: null, x_2: null, x_3: null, x_4: null, x_5: null });
     } finally {
       setLoading(false);
     }
@@ -50,7 +56,7 @@ function Production() {
     ? ((prodData.lotInfo.currentQuantity / prodData.lotInfo.targetQuantity) * 100).toFixed(1)
     : '0.0';
 
-  if (loading || (!prodData && !error)) {
+  if (loading) {
     return (
       <main className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div>데이터를 불러오는 중입니다...</div>
@@ -63,6 +69,14 @@ function Production() {
       <main className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
         <div style={{ color: 'var(--color-error)' }}>데이터를 불러오는데 실패했습니다.</div>
         <button className="btn-primary" onClick={loadData} style={{ marginTop: '16px' }}>다시 시도</button>
+      </main>
+    );
+  }
+
+  if (!prodData) {
+    return (
+      <main className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: 'var(--color-muted)' }}>해당 조건에 대한 데이터가 없습니다.</div>
       </main>
     );
   }

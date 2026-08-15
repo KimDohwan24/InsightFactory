@@ -1,32 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchAIPredictions } from '../api';
 
 export default function AIPrediction() {
   const [selectedProduct, setSelectedProduct] = useState('A_31');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPred, setSelectedPred] = useState(null);
-
   const [error, setError] = useState(null);
+  const requestIdRef = useRef(0);
 
   const loadData = async () => {
+    const currentId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
       const result = await fetchAIPredictions(selectedProduct);
-      setData(result);
-      setSelectedPred(null);
+      if (currentId === requestIdRef.current) {
+        setData(result);
+        setSelectedPred(null);
+      }
     } catch (err) {
-      console.error(err);
-      setError(err);
-      setData(null);
+      if (currentId === requestIdRef.current) {
+        console.error(err);
+        setError(err);
+        setData(null);
+      }
     } finally {
-      setLoading(false);
+      if (currentId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     loadData();
+    return () => { requestIdRef.current++; };
   }, [selectedProduct]);
 
   if (loading || (!data && !error)) {

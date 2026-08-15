@@ -110,9 +110,9 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* ③ 불량률 추이 */}
+          {/* ③ 불량 건수 추이 */}
           <div className="card">
-            <h3 className="card-title">불량률 추이 (Defect Rate Trend)</h3>
+            <h3 className="card-title">불량 건수 추이 (Defect Count Trend)</h3>
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer>
                 <LineChart data={defectTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>

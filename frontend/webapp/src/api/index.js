@@ -11,6 +11,15 @@ import {
 // Delay function to simulate network latency
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const fetchWithAuth = async (url, options = {}) => {
+  const token = localStorage.getItem('jwt_token');
+  const headers = { ...options.headers };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return fetch(url, { ...options, headers });
+};
+
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 export const fetchDashboardData = async () => {
@@ -20,7 +29,7 @@ export const fetchDashboardData = async () => {
   }
   
   // Real API call would go here
-  const response = await fetch('/api/dashboard');
+  const response = await fetchWithAuth('/api/dashboard');
   if (!response.ok) throw new Error('Failed to fetch dashboard data');
   return response.json();
 };
@@ -82,7 +91,7 @@ export const fetchProductionData = async (product, line) => {
   }
   
   // Real API call would go here
-  const response = await fetch(`/api/production?product=${product}&line=${line}`);
+  const response = await fetchWithAuth(`/api/production?product=${product}&line=${line}`);
   if (!response.ok) throw new Error('Failed to fetch production data');
   return response.json();
 };
@@ -93,7 +102,7 @@ export const fetchWorkOrders = async () => {
     await delay(700);
     data = workOrdersMockData;
   } else {
-    const response = await fetch('/api/work-orders');
+    const response = await fetchWithAuth('/api/work-orders');
     if (!response.ok) throw new Error('Failed to fetch work orders');
     data = await response.json();
   }
@@ -111,7 +120,7 @@ export const fetchAIPredictions = async (product) => {
     dynamicMock.predictions = dynamicMock.predictions.filter(p => p.product === product);
     return dynamicMock;
   }
-  const response = await fetch(`/api/ai-predictions?product=${product}`);
+  const response = await fetchWithAuth(`/api/ai-predictions?product=${product}`);
   if (!response.ok) throw new Error('Failed to fetch AI predictions');
   return response.json();
 };
@@ -121,7 +130,7 @@ export const fetchAlarms = async () => {
     await delay(500);
     return alarmHistoryMockData;
   }
-  const response = await fetch('/api/alarms');
+  const response = await fetchWithAuth('/api/alarms');
   if (!response.ok) throw new Error('Failed to fetch alarms');
   return response.json();
 };
@@ -131,7 +140,7 @@ export const fetchStatistics = async () => {
     await delay(800);
     return statisticsMockData;
   }
-  const response = await fetch('/api/statistics');
+  const response = await fetchWithAuth('/api/statistics');
   if (!response.ok) throw new Error('Failed to fetch statistics');
   return response.json();
 };
@@ -141,7 +150,7 @@ export const fetchEquipment = async () => {
     await delay(650);
     return equipmentMockData;
   }
-  const response = await fetch('/api/equipment');
+  const response = await fetchWithAuth('/api/equipment');
   if (!response.ok) throw new Error('Failed to fetch equipment data');
   return response.json();
 };
