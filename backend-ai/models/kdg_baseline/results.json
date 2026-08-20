@@ -1,0 +1,169 @@
+{
+  "baseline": "kdg1385_style",
+  "seed": 42,
+  "n_splits": 5,
+  "train_rows": 598,
+  "test_rows": 310,
+  "group_counts": {
+    "A_31": 249,
+    "T_O_31": 349
+  },
+  "overall_oof_metrics": {
+    "macro_f1": 0.645326284799236,
+    "accuracy": 0.7357859531772575,
+    "rows": 598,
+    "prediction_counts": {
+      "0": 71,
+      "1": 406,
+      "2": 121
+    }
+  },
+  "groups": {
+    "A_31": {
+      "group": "A_31",
+      "product_codes": [
+        "A_31"
+      ],
+      "train_rows": 249,
+      "class_counts": {
+        "0": 60,
+        "1": 118,
+        "2": 71
+      },
+      "oof_metrics": {
+        "macro_f1": 0.6911310037388553,
+        "accuracy": 0.6907630522088354,
+        "rows": 249,
+        "prediction_counts": {
+          "0": 62,
+          "1": 106,
+          "2": 81
+        }
+      },
+      "best_lgbm": {
+        "top_k": 97,
+        "weight0": 4.163694923198908,
+        "weight2": 3.720871253547563,
+        "n_estimators": 137,
+        "max_depth": 4,
+        "learning_rate": 0.03789562279283675,
+        "subsample": 0.6018960478612357,
+        "colsample_bytree": 0.9311149037830162,
+        "value": 0.6733082706766917
+      },
+      "best_catboost": {
+        "top_k": 202,
+        "weight0": 2.5347171131856236,
+        "weight2": 1.5854643368675156,
+        "iterations": 145,
+        "depth": 7,
+        "learning_rate": 0.06432759992849894,
+        "value": 0.6391461280325222
+      },
+      "thresholds_for_test": null,
+      "cross_fitted_thresholds": [],
+      "fold_counts": {
+        "0": 50,
+        "1": 50,
+        "2": 50,
+        "3": 50,
+        "4": 49
+      }
+    },
+    "T_O_31": {
+      "group": "T_O_31",
+      "product_codes": [
+        "T_31",
+        "O_31"
+      ],
+      "train_rows": 349,
+      "class_counts": {
+        "0": 28,
+        "1": 289,
+        "2": 32
+      },
+      "oof_metrics": {
+        "macro_f1": 0.4277753984884715,
+        "accuracy": 0.7679083094555874,
+        "rows": 349,
+        "prediction_counts": {
+          "0": 9,
+          "1": 300,
+          "2": 40
+        }
+      },
+      "best_lgbm": {
+        "top_k": 32,
+        "weight0": 12.416459998367678,
+        "weight2": 10.89600281386664,
+        "n_estimators": 123,
+        "max_depth": 6,
+        "learning_rate": 0.011858906685575274,
+        "subsample": 0.7433862914177091,
+        "colsample_bytree": 0.6463476238100518,
+        "value": 0.45469038609374185
+      },
+      "best_catboost": {
+        "top_k": 375,
+        "weight0": 11.411080875374331,
+        "weight2": 11.861548404694751,
+        "iterations": 76,
+        "depth": 5,
+        "learning_rate": 0.09454998079142529,
+        "value": 0.4665709491796448
+      },
+      "thresholds_for_test": {
+        "thr0": 0.4439773697721492,
+        "thr2": 0.3906166695156899
+      },
+      "cross_fitted_thresholds": [
+        {
+          "fold": 0,
+          "thr0": 0.44779726797191227,
+          "thr2": 0.3506486149129522
+        },
+        {
+          "fold": 1,
+          "thr0": 0.4872646624002636,
+          "thr2": 0.3495492978132687
+        },
+        {
+          "fold": 2,
+          "thr0": 0.45083138600095546,
+          "thr2": 0.39212466426349085
+        },
+        {
+          "fold": 3,
+          "thr0": 0.4485487126680112,
+          "thr2": 0.38333518180221066
+        },
+        {
+          "fold": 4,
+          "thr0": 0.452754244758393,
+          "thr2": 0.378099868677703
+        }
+      ],
+      "fold_counts": {
+        "0": 70,
+        "1": 70,
+        "2": 70,
+        "3": 70,
+        "4": 69
+      },
+      "legacy_oof_metrics_same_data_threshold_tuning": {
+        "macro_f1": 0.47199286389997125,
+        "accuracy": 0.7908309455587392,
+        "rows": 349,
+        "prediction_counts": {
+          "0": 13,
+          "1": 304,
+          "2": 32
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "submission": "C:\\Users\\DoHwan\\Desktop\\Anti\\InsightFactory\\backend-ai\\dataset\\submission_kdg_baseline.csv",
+    "output_dir": "C:\\Users\\DoHwan\\Desktop\\Anti\\InsightFactory\\backend-ai\\models\\kdg_baseline"
+  }
+}
