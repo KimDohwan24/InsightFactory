@@ -1,0 +1,3 @@
+[tools]
+# Project JDK. Keep this in sync with the Gradle Java toolchain.
+java = "temurin-25"
